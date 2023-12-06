@@ -4,6 +4,8 @@ import javax.swing.*;
 
 import java.awt.GridLayout;
 import java.awt.event.*;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class LoginGUI extends JFrame {
 
@@ -70,37 +72,44 @@ public class LoginGUI extends JFrame {
     }
 
     // New method for Register button action - 
+
     public void actionregister() {
         bregister.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 // Implement registration logic here
                 
-                // Create the panel for name and surname
+                // Create the panel for username and password
                 JPanel registerPanel = new JPanel();
-                JLabel nameLabel = new JLabel("Name:");
-                JLabel surnameLabel = new JLabel("Surname:");
-                JTextField nameField = new JTextField(15);
-                JTextField surnameField = new JTextField(15);
+                JLabel usernameLabel = new JLabel("Username:");
+                JLabel passwordLabel = new JLabel("Password:");
+                JTextField usernameField = new JTextField(15);
+                JTextField passwordField = new JTextField(15);
                 
                 // Set the layout for the register panel
                 registerPanel.setLayout(new GridLayout(2, 2));
                 
                 // Add the labels and input fields to the register panel
-                registerPanel.add(nameLabel);
-                registerPanel.add(nameField);
-                registerPanel.add(surnameLabel);
-                registerPanel.add(surnameField);
+                registerPanel.add(usernameLabel);
+                registerPanel.add(usernameField);
+                registerPanel.add(passwordLabel);
+                registerPanel.add(passwordField);
                 
                 // Show a dialog with the register panel
                 int result = JOptionPane.showConfirmDialog(null, registerPanel, "Register", JOptionPane.OK_CANCEL_OPTION);
                 
                 // Check if the user clicked the OK button
                 if (result == JOptionPane.OK_OPTION) {
-                    String registeredName = nameField.getText();
-                    String registeredUsurname = surnameField.getText();
-                    
-                    // Perform registration logic with the name and surname values
-                    // ...
+                    String registeredUsername = usernameField.getText();
+                    String registeredPassword = passwordField.getText();
+               
+                    // Store the registration data in a file
+                    try {
+                        FileWriter writer = new FileWriter("so_called_database.txt", true);
+                        writer.write(registeredUsername + "," + registeredPassword + "\n");
+                        writer.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
