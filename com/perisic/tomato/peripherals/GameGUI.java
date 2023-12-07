@@ -4,120 +4,159 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-
 import javax.swing.*;
-
 import com.perisic.tomato.engine.GameEngine;
 
-/**
- * A Simple Graphical User Interface for the Six Equation Game.
- * 
- * @author Marc Conrad
- *
- */
 public class GameGUI extends JFrame implements ActionListener {
 
-	private static final long serialVersionUID = -107785653906635L;
-	
+    public static final long serialVersionUID = -107785653906635L;
+    public static final int FRAME_WIDTH = 690;
+    public static final int FRAME_HEIGHT = 500;
+    public static final int BUTTON_FONT_SIZE = 20;
 
-	/**
-	 * Method that is called when a button has been pressed.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		int solution = Integer.parseInt(e.getActionCommand());
-		boolean correct = myGame.checkSolution(solution);
-		int score = myGame.getScore(); 
-		if (correct) {
-			System.out.println("Correct solution entered!");
-			currentGame = myGame.nextGame(); 			
-			ImageIcon ii = new ImageIcon(currentGame);
-			questArea.setIcon(ii);
-			infoArea.setText("Good!  Score: "+score);
-		} else { 
-			System.out.println("Not Correct"); 
-			infoArea.setText("Oops. Try again!  Score: "+score);
-		}
-	}
+    public static final Color BUTTON_DEFAULT_COLOR = new Color(52, 152, 219);
+    public static final Color BUTTON_HOVER_COLOR = new Color(41, 128, 185);
+    public static final Color BUTTON_CORRECT_COLOR = Color.BLUE;
 
-	JLabel questArea = null;
-	GameEngine myGame = null;
-	BufferedImage currentGame = null;
-	JTextArea infoArea = null;
-/**
- * Initializes the game. 
- * @param player
- */
-	private void initGame(String player) {
-		setSize(690, 500);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setTitle("What is the missing value?");
-		JPanel panel = new JPanel();
+    private JLabel questArea = null;
+    private GameEngine myGame = null;
+    private BufferedImage currentGame = null;
+    private JTextArea infoArea = null;
 
-		myGame = new GameEngine(player);
-		currentGame = myGame.nextGame();
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int solution = Integer.parseInt(e.getActionCommand());
+        boolean correct = myGame.checkSolution(solution);
+        int score = myGame.getScore();                          
 
-		infoArea = new JTextArea(1, 40);
-		infoArea.setEditable(false);
-		infoArea.setText("What is the value of the tomato?   Score: 0");
-		
-		Font infoFont = new Font("Arial", Font.BOLD, 16);
-		infoArea.setFont(infoFont);
-		infoArea.setForeground(Color.WHITE);  // Set text color
-		infoArea.setBackground(new Color(52, 73, 94));  // Set background color
-		
-		// Add a border to the JTextArea
-    infoArea.setBorder(BorderFactory.createCompoundBorder(
-	BorderFactory.createLineBorder(new Color(44, 62, 80), 2), // Outer border
-	BorderFactory.createEmptyBorder(5, 5, 5, 5)  // Inner padding
-));
-		JScrollPane infoPane = new JScrollPane(infoArea);
-		panel.add(infoPane);
+        if (correct) {
+            handleCorrectSolution(score);
+        } else {
+            handleIncorrectSolution(score);
+        }
+    }
 
-		ImageIcon ii = new ImageIcon(currentGame);
-		questArea = new JLabel(ii);
-	    questArea.setSize(330, 600);
-	    
-		JScrollPane questPane = new JScrollPane(questArea);
-		panel.add(questPane);
+    private void handleCorrectSolution(int score) {
+        System.out.println("Correct solution entered!");
+        currentGame = myGame.nextGame();
+        questArea.setIcon(new ImageIcon(currentGame));
+        infoArea.setText("Good!  Score: " + score);
+        flashButton(BUTTON_CORRECT_COLOR);
+    }
 
-		for (int i = 0; i < 10; i++) {
-			JButton btn = new JButton(String.valueOf(i));
-			panel.add(btn);
-			btn.addActionListener(this);
-		}
+    private void handleIncorrectSolution(int score) {
+        System.out.println("Not Correct");
+        infoArea.setText("Oops. Try again!  Score: " + score);
+    }
 
-		getContentPane().add(panel);
-		panel.repaint();
+    private void flashButton(Color color) {
+        Color originalColor = BUTTON_DEFAULT_COLOR;
+        Timer timer = new Timer(500, e -> {
+            ((JButton) e.getSource()).setBackground(originalColor);
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
 
-	}
-/**
- * Default player is null. 
- */
-	public GameGUI() {
-		super();
-		initGame(null);
-	}
+    private void initializeButtons(JPanel panel) {
+        for (int i = 0; i < 10; i++) {
+            JButton btn = createNumberButton(String.valueOf(i));
+            panel.add(btn);
+        }
+    }
 
-	/**
-	 * Use this to start GUI, e.g., after login.
-	 * 
-	 * @param player
-	 */
-	public GameGUI(String player) {
-		super();
-		initGame(player);
-	}
+    private JButton createNumberButton(String label) {
+        JButton btn = new JButton(label);
+        btn.setBackground(BUTTON_DEFAULT_COLOR);
+        btn.setForeground(Color.BLACK);
+        btn.setFont(btn.getFont().deriveFont((float) BUTTON_FONT_SIZE));
 
-	/**
-	 * Main entry point into the equation game. Can be used without login for testing. 
-	 * 
-	 * @param args not used.
-	 */
-	public static void main(String[] args) {
-		GameGUI myGUI = new GameGUI();
-		myGUI.setVisible(true);
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(BUTTON_HOVER_COLOR);
+            }
 
-	}
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(BUTTON_DEFAULT_COLOR);
+            }
+        });
+
+        btn.addActionListener(this::handleButtonClick);
+        return btn;
+    }
+
+    private void handleButtonClick(ActionEvent e) {
+        int solution = Integer.parseInt(e.getActionCommand());
+        boolean correct = myGame.checkSolution(solution);
+        int score = myGame.getScore();
+
+        if (correct) {
+            handleCorrectSolution(score);
+        } else {
+            handleIncorrectSolution(score);
+        }
+    }
+
+    private void initGame(String player) {
+        setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("What is the missing value?");
+        JPanel panel = new JPanel();
+        panel.setBackground(new Color(240, 240, 240));
+
+        myGame = new GameEngine(player);
+        currentGame = myGame.nextGame();
+
+        infoArea = new JTextArea(1, 25);
+        infoArea.setEditable(false);
+        infoArea.setText("What is the value of the tomato?   Score: 0");
+        infoArea.setFont(new Font("Arial", Font.BOLD, 16));
+        infoArea.setForeground(Color.WHITE);
+        infoArea.setBackground(new Color(52, 73, 94));
+        infoArea.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.RED, 2),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        JScrollPane infoPane = new JScrollPane(infoArea);
+
+        panel.add(infoPane);
+
+        ImageIcon ii = new ImageIcon(currentGame);
+        questArea = new JLabel(ii);
+        questArea.setSize(330, 600);
+
+        JScrollPane questPane = new JScrollPane(questArea);
+        panel.add(questPane);
+
+        initializeButtons(panel);
+
+        getContentPane().add(panel);
+        panel.repaint();
+    }
+
+    public GameGUI() {
+        super();
+        initGame(null);
+    }
+
+    public GameGUI(String player) {
+        super();
+        initGame(player);
+    }
+
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            GameGUI myGUI = new GameGUI();
+            myGUI.setVisible(true);
+        });
+    }
 }
